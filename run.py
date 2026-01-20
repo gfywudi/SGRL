@@ -145,21 +145,6 @@ def main(dataset, d, a):
     torch.manual_seed(fix_seed)
     np.random.seed(fix_seed)
     args.use_gpu = True if torch.cuda.is_available() and args.use_gpu else False
-    if args.use_multi_gpu:
-        ip = os.environ.get("MASTER_ADDR", "127.0.0.1")
-        port = os.environ.get("MASTER_PORT", "64209")
-        hosts = int(os.environ.get("WORLD_SIZE", "8"))      
-        rank = int(os.environ.get("RANK", "0"))      
-        local_rank = int(os.environ.get("LOCAL_RANK", "0"))
-        gpus = torch.cuda.device_count()      
-        args.local_rank = local_rank
-        print(
-            'ip: {}, port: {}, hosts: {}, rank: {}, local_rank: {}, gpus: {}'.format(ip, port, hosts, rank, local_rank,
-                                                                                     gpus))
-        dist.init_process_group(backend="nccl", init_method=f"tcp://{ip}:{port}", world_size=hosts, rank=rank)
-        print('init_process_group finished')
-        torch.cuda.set_device(local_rank)
-
 
     if args.task_name == 'imputation':
         Exp = Exp_Imputation
