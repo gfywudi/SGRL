@@ -8,8 +8,7 @@ import math
 
 
 def get_mask(input_size, window_size, inner_size):
-    """Get the attention mask of PAM-Naive"""
-    # Get the size of all layers
+                  
     all_size = []
     all_size.append(input_size)
     for i in range(len(window_size)):
@@ -17,18 +16,14 @@ def get_mask(input_size, window_size, inner_size):
         all_size.append(layer_size)
 
     seq_length = sum(all_size)
-    mask = torch.zeros(seq_length, seq_length)
-
-    # get intra-scale mask
+    mask = torch.zeros(seq_length, seq_length)       
     inner_window = inner_size // 2
     for layer_idx in range(len(all_size)):
         start = sum(all_size[:layer_idx])
         for i in range(start, start + all_size[layer_idx]):
             left_side = max(i - inner_window, start)
             right_side = min(i + inner_window + 1, start + all_size[layer_idx])
-            mask[i, left_side:right_side] = 1
-
-    # get inter-scale mask
+            mask[i, left_side:right_side] = 1       
     for layer_idx in range(1, len(all_size)):
         start = sum(all_size[:layer_idx])
         for i in range(start, start + all_size[layer_idx]):
@@ -48,7 +43,7 @@ def get_mask(input_size, window_size, inner_size):
 
 
 def refer_points(all_sizes, window_size):
-    """Gather features from PAM's pyramid sequences"""
+           
     input_size = all_sizes[0]
     indexes = torch.zeros(input_size, len(all_sizes))
 
@@ -77,7 +72,7 @@ class RegularMask():
 
 
 class EncoderLayer(nn.Module):
-    """ Compose with two layers """
+           
 
     def __init__(self, d_model, d_inner, n_head, dropout=0.1, normalize_before=True):
         super(EncoderLayer, self).__init__()
@@ -98,7 +93,7 @@ class EncoderLayer(nn.Module):
 
 
 class Encoder(nn.Module):
-    """ A encoder model with self attention mechanism. """
+           
 
     def __init__(self, configs, window_size, inner_size):
         super().__init__()
@@ -111,7 +106,7 @@ class Encoder(nn.Module):
         self.layers = nn.ModuleList([
             EncoderLayer(configs.d_model, configs.d_ff, configs.n_heads, dropout=configs.dropout,
                          normalize_before=False) for _ in range(configs.e_layers)
-        ])  # naive pyramid attention
+        ])       
 
         self.enc_embedding = DataEmbedding(
             configs.enc_in, configs.d_model, configs.dropout)
@@ -154,7 +149,7 @@ class ConvLayer(nn.Module):
 
 
 class Bottleneck_Construct(nn.Module):
-    """Bottleneck convolution CSCM"""
+           
 
     def __init__(self, d_model, window_size, d_inner):
         super(Bottleneck_Construct, self).__init__()
@@ -189,7 +184,7 @@ class Bottleneck_Construct(nn.Module):
 
 
 class PositionwiseFeedForward(nn.Module):
-    """ Two-layer position-wise feed-forward neural network. """
+           
 
     def __init__(self, d_in, d_hid, dropout=0.1, normalize_before=True):
         super().__init__()

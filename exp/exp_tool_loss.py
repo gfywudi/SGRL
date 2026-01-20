@@ -131,7 +131,6 @@ class UniCL(nn.Module):
         return total_loss / label_nums
 
 def precision_at_k(output: torch.Tensor, target: torch.Tensor, top_k=(1,)):
-    ''' Compute the accuracy over the k top predictions for the specified values of k'''
     with torch.no_grad():
         maxk = max(top_k)
         batch_size = target.size(0)
@@ -171,29 +170,16 @@ def clip_loss(x, y, temperature=0.07, device=None):
 
 class FocalLoss(nn.Module):
     def __init__(self, alpha=0.25, gamma=2.0, reduction='mean'):
-        """
-        Focal Loss实现
-        :param alpha: 平衡因子，默认为 0.25
-        :param gamma: 调节因子，默认为 2.0
-        :param reduction: 损失的计算方式，'mean' 或 'sum'，默认为 'mean'
-        """
+
         super(FocalLoss, self).__init__()
         self.alpha = alpha
         self.gamma = gamma
         self.reduction = reduction
 
     def forward(self, inputs, targets):
-        """
-        :param inputs: 模型的预测值，形状为 (N, C)，其中 N 是样本数量，C 是类别数
-        :param targets: 真实标签，已经是 one-hot 编码，形状为 (N, C)
-        :return: 计算得到的 Focal Loss
-        """
-              
+
         inputs = torch.clamp(inputs, min=1e-7, max=1 - 1e-7)
-
-              
         p_t = (inputs * targets).sum(dim=1)
-
               
         loss = -self.alpha * (1 - p_t) ** self.gamma * torch.log(p_t)
 
@@ -231,14 +217,7 @@ class AsymmetricLoss(nn.Module):
         self.eps = eps
 
     def forward(self, x, y):
-        """"
-        Parameters
-        ----------
-        x: input logits
-        y: targets (multi-label binarized vector)
-        """
 
-              
         x_sigmoid = torch.sigmoid(x)
         xs_pos = x_sigmoid
         xs_neg = 1 - x_sigmoid
@@ -264,7 +243,6 @@ class AsymmetricLoss(nn.Module):
             if self.disable_torch_grad_focal_loss:
                 torch.set_grad_enabled(True)
             loss *= one_sided_w
-
         return -loss.sum()
 
 
@@ -293,8 +271,6 @@ class ModelEma(torch.nn.Module):
         self._update(model, update_fn=lambda e, m: m)
 
 def label_decorrelation_loss(H_sem, y, eps=1e-5):
-          
-          
     B, C, D = H_sem.shape
 
     present = (y.sum(dim=0) > 0)              
@@ -320,9 +296,7 @@ def label_decorrelation_loss(H_sem, y, eps=1e-5):
 
 
 if __name__ == '__main__':
-          
-          
-          
+
     test = UniCL()
     result = test(torch.randn((3, 5)), torch.randn((3, 5)), torch.randint(0, 2, (3, 4)))
 

@@ -114,9 +114,7 @@ class EarlyStopping:
 
     def save_checkpoint(self, val_loss, model, path,all_labels, all_preds,all_dict):
         def convert_int64_keys(obj):
-            """
-            递归地将字典中的所有 int64 键转换为 int 类型。
-            """
+                   
             if isinstance(obj, dict):
                 return {str(key) if isinstance(key, np.int64) else key: convert_int64_keys(value)
                         for key, value in obj.items()}
@@ -212,7 +210,7 @@ class EarlyStoppingLarge:
 
 
 class dotdict(dict):
-    """dot.notation access to dictionary attributes"""
+           
     __getattr__ = dict.get
     __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__
@@ -231,9 +229,7 @@ class StandardScaler():
 
 
 def visual(true, preds=None, name='./pic/test.pdf'):
-    """
-    Results visualization
-    """
+           
     plt.figure()
     if preds is not None:
         plt.plot(preds, label='Prediction', c='dodgerblue', linewidth=2)
@@ -243,9 +239,7 @@ def visual(true, preds=None, name='./pic/test.pdf'):
 
 
 def attn_map(attn, path='./pic/attn_map.pdf'):
-    """
-    Attention map visualization
-    """
+           
     plt.figure()
     plt.imshow(attn, cmap='viridis', aspect='auto')
     plt.colorbar()

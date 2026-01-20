@@ -63,15 +63,3 @@ class Exp_Basic(object):
             device = torch.device('cpu')
             print('Use CPU')
         return device
-
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          

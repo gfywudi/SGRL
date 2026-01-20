@@ -9,13 +9,6 @@ import os
 
 
 class AutoCorrelation(nn.Module):
-    """
-    AutoCorrelation Mechanism with the following two phases:
-    (1) period-based dependencies discovery
-    (2) time delay aggregation
-    This block can replace the self-attention family mechanism seamlessly.
-    """
-
     def __init__(self, mask_flag=True, factor=1, scale=None, attention_dropout=0.1, output_attention=False):
         super(AutoCorrelation, self).__init__()
         self.factor = factor
@@ -25,21 +18,15 @@ class AutoCorrelation(nn.Module):
         self.dropout = nn.Dropout(attention_dropout)
 
     def time_delay_agg_training(self, values, corr):
-        """
-        SpeedUp version of Autocorrelation (a batch-normalization style design)
-        This is for the training phase.
-        """
+
         head = values.shape[1]
         channel = values.shape[2]
-        length = values.shape[3]
-        # find top k
+        length = values.shape[3]      
         top_k = int(self.factor * math.log(length))
         mean_value = torch.mean(torch.mean(corr, dim=1), dim=1)
         index = torch.topk(torch.mean(mean_value, dim=0), top_k, dim=-1)[1]
-        weights = torch.stack([mean_value[:, index[i]] for i in range(top_k)], dim=-1)
-        # update corr
-        tmp_corr = torch.softmax(weights, dim=-1)
-        # aggregation
+        weights = torch.stack([mean_value[:, index[i]] for i in range(top_k)], dim=-1)      
+        tmp_corr = torch.softmax(weights, dim=-1)      
         tmp_values = values
         delays_agg = torch.zeros_like(values).float()
         for i in range(top_k):
@@ -49,23 +36,16 @@ class AutoCorrelation(nn.Module):
         return delays_agg
 
     def time_delay_agg_inference(self, values, corr):
-        """
-        SpeedUp version of Autocorrelation (a batch-normalization style design)
-        This is for the inference phase.
-        """
+
         batch = values.shape[0]
         head = values.shape[1]
         channel = values.shape[2]
-        length = values.shape[3]
-        # index init
-        init_index = torch.arange(length).unsqueeze(0).unsqueeze(0).unsqueeze(0).repeat(batch, head, channel, 1).to(values.device)
-        # find top k
+        length = values.shape[3]      
+        init_index = torch.arange(length).unsqueeze(0).unsqueeze(0).unsqueeze(0).repeat(batch, head, channel, 1).to(values.device)      
         top_k = int(self.factor * math.log(length))
         mean_value = torch.mean(torch.mean(corr, dim=1), dim=1)
-        weights, delay = torch.topk(mean_value, top_k, dim=-1)
-        # update corr
-        tmp_corr = torch.softmax(weights, dim=-1)
-        # aggregation
+        weights, delay = torch.topk(mean_value, top_k, dim=-1)      
+        tmp_corr = torch.softmax(weights, dim=-1)      
         tmp_values = values.repeat(1, 1, 1, 2)
         delays_agg = torch.zeros_like(values).float()
         for i in range(top_k):
@@ -76,21 +56,15 @@ class AutoCorrelation(nn.Module):
         return delays_agg
 
     def time_delay_agg_full(self, values, corr):
-        """
-        Standard version of Autocorrelation
-        """
+ 
         batch = values.shape[0]
         head = values.shape[1]
         channel = values.shape[2]
-        length = values.shape[3]
-        # index init
-        init_index = torch.arange(length).unsqueeze(0).unsqueeze(0).unsqueeze(0).repeat(batch, head, channel, 1).to(values.device)
-        # find top k
+        length = values.shape[3]      
+        init_index = torch.arange(length).unsqueeze(0).unsqueeze(0).unsqueeze(0).repeat(batch, head, channel, 1).to(values.device)      
         top_k = int(self.factor * math.log(length))
-        weights, delay = torch.topk(corr, top_k, dim=-1)
-        # update corr
-        tmp_corr = torch.softmax(weights, dim=-1)
-        # aggregation
+        weights, delay = torch.topk(corr, top_k, dim=-1)      
+        tmp_corr = torch.softmax(weights, dim=-1)      
         tmp_values = values.repeat(1, 1, 1, 2)
         delays_agg = torch.zeros_like(values).float()
         for i in range(top_k):
@@ -108,15 +82,11 @@ class AutoCorrelation(nn.Module):
             keys = torch.cat([keys, zeros], dim=1)
         else:
             values = values[:, :L, :, :]
-            keys = keys[:, :L, :, :]
-
-        # period-based dependencies
+            keys = keys[:, :L, :, :]      
         q_fft = torch.fft.rfft(queries.permute(0, 2, 3, 1).contiguous(), dim=-1)
         k_fft = torch.fft.rfft(keys.permute(0, 2, 3, 1).contiguous(), dim=-1)
         res = q_fft * torch.conj(k_fft)
-        corr = torch.fft.irfft(res, dim=-1)
-
-        # time delay agg
+        corr = torch.fft.irfft(res, dim=-1)      
         if self.training:
             V = self.time_delay_agg_training(values.permute(0, 2, 3, 1).contiguous(), corr).permute(0, 3, 1, 2)
         else:

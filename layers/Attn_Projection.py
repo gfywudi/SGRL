@@ -49,7 +49,7 @@ class RotaryProjection(Projection):
     @staticmethod
     def _rotate(x):
         x1, x2 = rearrange(x, "... (dim r) -> r ... dim", r=2)
-        return rearrange([-x2, x1], "r ... dim -> ... (dim r)", r=2)  # noqa
+        return rearrange([-x2, x1], "r ... dim -> ... (dim r)", r=2)      
 
     def forward(self, x, seq_id):
         self._init_freq(max_len=seq_id.max() + 1)

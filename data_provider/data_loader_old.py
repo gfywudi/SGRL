@@ -99,23 +99,23 @@ class G12EC(Dataset):
 class SPH(Dataset):
     def __init__(self, root_path, data_path, seq_len, patch_len, flag="train"):
         self.flag = flag
-        self.data_o = np.load("/.../data/SPH/Processed_data/X_cut1000.npy")
+        self.data_o = np.load("/.../X_cut1000.npy")
               
               
               
               
         self.data_ = self.data_o.swapaxes(1, 2)
-        self.Y_ = np.load('/.../data/SPH/Processed_data/Y_onehot.npy', allow_pickle=True)
-        with open('/.../data/SPH/Processed_data/Y_origin.json','r', encoding='utf-8') as file:
+        self.Y_ = np.load('/.../Y_onehot.npy', allow_pickle=True)
+        with open('/.../Y_origin.json','r', encoding='utf-8') as file:
             self.Y_or = json.load(file)
-        with open('/.../data/SPH/Processed_data/Y_unique_list.json','r', encoding='utf-8') as file:
+        with open('/.../Y_unique_list.json','r', encoding='utf-8') as file:
             self.label_list = np.ravel(json.load(file))
         with open('/../code_description.json', 'r', encoding='utf-8') as file:
             self.data_dict = json.load(file)
         indices = np.where(self.label_list == '1')[0]
 
         if self.flag == "train":
-            with open('/.../data/SPH/Processed_data/train_index.json', 'r', encoding='utf-8') as file:
+            with open('/.../train_index.json', 'r', encoding='utf-8') as file:
                 train_index = json.load(file)
             self.data = self.data_[train_index]
             self.Y = self.Y_[train_index]
@@ -126,7 +126,7 @@ class SPH(Dataset):
                 print(f"类别 {self.label_list[i]} 的样本数量: {count}")
 
         elif self.flag == "valid":
-            with open('/.../data/SPH/Processed_data/test_index.json', 'r', encoding='utf-8') as file:
+            with open('/.../test_index.json', 'r', encoding='utf-8') as file:
                 test_index = json.load(file)
             self.data = self.data_[test_index]
             self.Y = self.Y_[test_index]
@@ -137,7 +137,7 @@ class SPH(Dataset):
                 print(f"类别 {self.label_list[i]} 的样本数量: {count}")
 
         else:
-            with open('/.../data/SPH/Processed_data/test_index.json', 'r', encoding='utf-8') as file:
+            with open('/.../test_index.json', 'r', encoding='utf-8') as file:
                 test_index = json.load(file)
             self.data = self.data_[test_index]
             self.Y = self.Y_[test_index]
@@ -165,7 +165,7 @@ class MIMIC(Dataset):
         self.seq_len = seq_len        
         self.patch_len = patch_len
         self.flag = flag
-        self.MIMIC_data_path = "/.../data/MIMIC/mimic-iv-ecg-diagnostic-electrocardiogram-matched-subset-1.0/label_json_X_and_Y/"
+        self.MIMIC_data_path = "/.../mimic-iv-ecg-diagnostic-electrocardiogram-matched-subset-1.0/"
         self.h5_path = self.MIMIC_data_path + "ecg_filtered.h5"
 
               
@@ -174,7 +174,7 @@ class MIMIC(Dataset):
         self.Y_ = np.load(self.MIMIC_data_path + "one_hot_labels.npy", allow_pickle=True)
 
         with open(
-                '/.../data/MIMIC/mimic-iv-ecg-diagnostic-electrocardiogram-matched-subset-1.0/label_json_X_and_Y/label_vocab.json',
+                '/.../label_vocab.json',
                 'r', encoding='utf-8') as file:
             label_list = json.load(file)
         self.indices_norm = np.where(np.array(label_list) == 'SINUS RHYTHM')[0]
@@ -235,7 +235,7 @@ class PTBXL(Dataset):
               
         self.Y_ = np.load('/.../Y_onehot.npy', allow_pickle=True)
 
-        Y_train = np.load('/.../data/PTBXL/PTBXL_diagnostic/superclass/Y_origin.npy', allow_pickle=True)
+        Y_train = np.load('/.../Y_origin.npy', allow_pickle=True)
         self.label_list = np.loadtxt('/.../Y_unique_list.txt',
                                 delimiter=',', dtype=str)
         indices = np.where(self.label_list == 'NORM')[0]

@@ -15,9 +15,7 @@ class TTMGatedLayer(nn.Module):
 
 class TTMMLP(nn.Module):
     def __init__(self, in_features, out_features, factor, dropout):
-        """
-            factor: expansion factor for the hidden layer (usually use 2~5), in our implementation, we default it to 2
-        """
+
         super().__init__()
         num_hidden = in_features * factor
         self.fc1 = nn.Linear(in_features, num_hidden)
@@ -34,9 +32,7 @@ class TTMMLP(nn.Module):
 
 class TTMMixerBlock(nn.Module):
     def __init__(self, d_model, features, mode, dropout):
-        """
-            mode: mix different dimensions of input tensor based on different mode, including "patch", "feature", "channel"
-        """
+               
         super().__init__()
 
         self.mode = mode
@@ -53,30 +49,23 @@ class TTMMixerBlock(nn.Module):
         self.gating_block = TTMGatedLayer(in_size=features, out_size=features)
 
     def forward(self, x):
-        residual = x  # [B M N P]
+        residual = x       
         x = self.norm(x)
 
-        assert self.mode in ["patch", "feature", "channel"]
-
-        # transpose the input tensor based on the mode so that mix the target dimension in the last dimension
-        if self.mode == "patch":
-            # when mode is "patch", mix the patches in the last dimension
-            x = x.permute(0, 1, 3, 2)  # [B M P N]
-        elif self.mode == "channel":
-            # when mode is "channel", mix the channels in the last dimension
-            x = x.permute(0, 3, 2, 1)  # [B P N M]
-        else:
-            # when mode is "feature", mix the features in the last dimension
+        assert self.mode in ["patch", "feature", "channel"]       
+        if self.mode == "patch":       
+            x = x.permute(0, 1, 3, 2)       
+        elif self.mode == "channel":       
+            x = x.permute(0, 3, 2, 1)       
+        else:       
             pass
 
         x = self.mlp(x)
-        x = self.gating_block(x)
-
-        # transpose the input tensor back to the original shape
+        x = self.gating_block(x)       
         if self.mode == "patch":
-            x = x.permute(0, 1, 3, 2)  # [B M N P]
+            x = x.permute(0, 1, 3, 2)       
         elif self.mode == "channel":
-            x = x.permute(0, 3, 2, 1)  # [B M N P]
+            x = x.permute(0, 3, 2, 1)       
         else:
             pass
 
@@ -86,9 +75,7 @@ class TTMMixerBlock(nn.Module):
 
 class TTMLayer(nn.Module):
     def __init__(self, d_model, num_patches, n_vars, mode, dropout):
-        """
-            mode: determines how to process the channels
-        """
+               
         super().__init__()
 
         if num_patches > 1:
@@ -102,28 +89,24 @@ class TTMLayer(nn.Module):
 
         self.mode = mode
         self.num_patches = num_patches
-        if self.mode == "mix_channel":
-            # when mode is "mix_channel", mix the channels in addition to the patches mixer and features mixer
+        if self.mode == "mix_channel":       
             self.channel_feature_mixer = TTMMixerBlock(
                 d_model=d_model, features=n_vars, mode="channel", dropout=dropout
             )
 
     def forward(self, x):
-        if self.mode == "mix_channel":
-            # when mode is "mix_channel", mix the channels in addition to the patches mixer and features mixer
-            x = self.channel_feature_mixer(x)  # [B M N P]
+        if self.mode == "mix_channel":       
+            x = self.channel_feature_mixer(x)       
 
         if self.num_patches > 1:
-            x = self.patch_mixer(x)  # [B M N P]
+            x = self.patch_mixer(x)       
 
-        x = self.feature_mixer(x)  # [B M N P]
+        x = self.feature_mixer(x)       
 
         return x
 
 class AutoTimesMLP(nn.Module):
-    '''
-    Multilayer perceptron to encode/decode high dimension representation of sequential data
-    '''
+           
     def __init__(self, f_in, f_out, hidden_dim=256, hidden_layers=2, dropout=0.1, activation='tanh'): 
         super(AutoTimesMLP, self).__init__()
         self.f_in = f_in

@@ -2,9 +2,7 @@ import torch
 from torch import nn, einsum
 import torch.nn.functional as F
 from einops import rearrange, repeat
-from einops.layers.torch import Rearrange
-
-# from visualizer import get_local
+from einops.layers.torch import Rearrange       
 
 class Residual(nn.Module):
     def __init__(self, fn):
@@ -54,8 +52,7 @@ class Attention(nn.Module):
         self.to_qkv = nn.Linear(dim, inner_dim * 3, bias=False)
         out2_neck = False
         if out2_neck:
-            self.to_out = nn.Sequential(
-                # nn.Linear(inner_dim, dim),
+            self.to_out = nn.Sequential(       
                 nn.Linear(inner_dim, 2*inner_dim),
                 nn.GELU(),
                 nn.Dropout(dropout),
@@ -66,9 +63,7 @@ class Attention(nn.Module):
             self.to_out = nn.Sequential(
                 nn.Linear(inner_dim, dim),
                 nn.Dropout(dropout)
-            ) if project_out else nn.Identity()
-
-    # @get_local('attn')
+            ) if project_out else nn.Identity()       
     def forward(self, x, mask=None):
         b, n, _, h = *x.shape, self.heads
         qkv = self.to_qkv(x).chunk(3, dim=-1)

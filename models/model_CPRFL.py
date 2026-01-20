@@ -153,13 +153,13 @@ class Model(nn.Module):
             self.preMSDNN = MSDNN()
             if self.weather_use_pretrain_model:
                 if self.pretrain_dataset == "PTBXL":
-                    self.ckpt_path = "/.../result/long_tail/model/ECG_no_pretrain_MSDNN_LLM+_onlyCLIP_PTBXL_44class/model_2025-10-15:15.pth"
+                    self.ckpt_path = "/...model.pth"
                 elif self.pretrain_dataset == "SPH":
-                    self.ckpt_path = "/.../result/long_tail/model/ECG_no_pretrain_MSDNN_LLM+_onlyCLIP_SPH_44class/model_2025-10-20:15.pth"
+                    self.ckpt_path = "/.../model.pth"
                 elif self.pretrain_dataset == "MIMIC":
-                    self.ckpt_path = "/.../result/long_tail/model/ECG_no_pretrain_MSDNN_LLM+_onlyCLIP_MIMIC_102class/model_2025-10-21:00.pth"
+                    self.ckpt_path = "/.../model.pth"
                 elif self.pretrain_dataset == "G12EC":
-                    self.ckpt_path = "/.../result/long_tail/model/ECG_have_pretrain_MSDNN_LLM+_onlyCLIP_G12EC_26class/model_2025-11-06:19.pth"
+                    self.ckpt_path = "/...model.pth"
             else:
                 self.ckpt_path = ""
             if self.ckpt_path != '':
@@ -195,11 +195,11 @@ class Model(nn.Module):
 
             if self.weather_use_pretrain_model:
                 if self.pretrain_dataset == "PTBXL":
-                    self.ckpt_path = "/.../result/long_tail/model/ECG_no_pretrain_Densenet_LLM+_onlyCLIP_PTBXL_44class/model_2025-10-23:21.pth"
+                    self.ckpt_path = "/.../model.pth"
                 elif self.pretrain_dataset == "SPH":
-                    self.ckpt_path = ""
+                    self.ckpt_path = "/.../model.pth"
                 elif self.pretrain_dataset == "MIMIC":
-                    self.ckpt_path = ""
+                    self.ckpt_path = "/.../model.pth"
             else:
                 self.ckpt_path = ""
 
@@ -262,9 +262,9 @@ class Model(nn.Module):
     def All_label_text_get(self):
         if self.dataset == "MIMIC":
 
-            with open('/../data/MIMIC/mimic-iv-ecg-diagnostic-electrocardiogram-matched-subset-1.0/label_json_X_and_Y/Y_unique_list.json', 'r', encoding='utf-8') as file:
+            with open('/../Y_unique_list.json', 'r', encoding='utf-8') as file:
                 self.label_list = json.load(file)
-            with open('/.../code/mamba-main/CKEPE_prompt_MIMIC.json', 'r',
+            with open('/../CKEPE_prompt_MIMIC.json', 'r',
                       encoding='utf-8') as file:
                 data_dict = json.load(file)
             text_list = []

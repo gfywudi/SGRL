@@ -41,38 +41,20 @@ class FinetuningConfig:
 
 
 class MetricsLogger(ABC):
-  """Abstract base class for logging metrics during training.
-
-    This class defines the interface for logging metrics during model training.
-    Concrete implementations can log to different backends (e.g., WandB, TensorBoard).
-    """
 
   @abstractmethod
   def log_metrics(self,
                   metrics: Dict[str, Any],
                   step: Optional[int] = None) -> None:
-    """Log metrics to the specified backend.
 
-        Args:
-          metrics: Dictionary containing metric names and values.
-          step: Optional step number or epoch for the metrics.
-        """
     pass
 
   @abstractmethod
   def close(self) -> None:
-    """Clean up any resources used by the logger."""
     pass
 
 
 class WandBLogger(MetricsLogger):
-  """Weights & Biases implementation of metrics logging.
-
-    Args:
-      project: Name of the W&B project.
-      config: Configuration dictionary to log.
-      rank: Process rank in distributed training.
-    """
 
   def __init__(self, project: str, config: Dict[str, Any], rank: int = 0):
     self.rank = rank
@@ -82,16 +64,10 @@ class WandBLogger(MetricsLogger):
   def log_metrics(self,
                   metrics: Dict[str, Any],
                   step: Optional[int] = None) -> None:
-    """Log metrics to W&B if on the main process.
 
-        Args:
-          metrics: Dictionary of metrics to log.
-          step: Current training step or epoch.
-        """
     wandb.log(metrics, step=step)
 
   def close(self) -> None:
-    """Finish the W&B run if on the main process."""
     if self.rank == 0:
       wandb.finish()
 
@@ -108,12 +84,12 @@ class Exp_train_CPRFL(Exp_Basic):
 
         if self.args.dataset == "MIMIC":
             with open(
-                    '.../data/MIMIC/mimic-iv-ecg-diagnostic-electrocardiogram-matched-subset-1.0/machine_measurement_X_and_Y/label_vocab.json',
+                    '/.../label_vocab.json',
                     'r', encoding='utf-8') as file:
                 text_list = json.load(file)
 
         elif self.args.dataset =="PTBXL":
-            self.label_list = np.loadtxt('/..../data/PTBXL/PTBXL_diagnostic/subsubclass/Y_unique_list.txt',
+            self.label_list = np.loadtxt('/..../Y_unique_list.txt',
                                          delimiter=',', dtype=str)
             with open('/..../CKEPE_prompt.json', 'r', encoding='utf-8') as file:
                 data_dict = json.load(file)
@@ -124,7 +100,7 @@ class Exp_train_CPRFL(Exp_Basic):
                 text_list.append(a)
 
         elif self.args.dataset =="SPH":
-            with open('/..../data/SPH/Processed_data/Y_unique_list.json', 'r', encoding='utf-8') as file:
+            with open('/..../Y_unique_list.json', 'r', encoding='utf-8') as file:
                 self.label_list = json.load(file)
 
 
@@ -466,9 +442,6 @@ class Exp_train_CPRFL(Exp_Basic):
         train_data, train_loader = self._get_data(flag='train')
               
         test_data, test_loader = self._get_data(flag='valid')
-
-              
-
         train_steps = len(train_loader)
 
         early_stopping = EarlyStopping(patience=self.args.patience, verbose=True)
@@ -518,9 +491,7 @@ class Exp_train_CPRFL(Exp_Basic):
                     "".format(
                         epoch + 1, train_steps, train_loss, test_loss, acc, macro_auc, macro_f1,
                     top_auc, middle_auc, bottom_auc))
-                      
-                      
-                      
+
             else:
                 print("Epoch: {0}, Steps: {1} | Train Loss: {2:.7f}".format(
                     epoch + 1, train_steps, train_loss))

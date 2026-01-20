@@ -67,14 +67,9 @@ class ExponentialSmoothing(nn.Module):
 
         return output
 
-    def get_exponential_weight(self, T):
-        # Generate array [0, 1, ..., T-1]
-        powers = torch.arange(T, dtype=torch.float, device=self.weight.device)
-
-        # (1 - \alpha) * \alpha^t, for all t = T-1, T-2, ..., 0]
-        weight = (1 - self.weight) * (self.weight ** torch.flip(powers, dims=(0,)))
-
-        # \alpha^t for all t = 1, 2, ..., T
+    def get_exponential_weight(self, T):       
+        powers = torch.arange(T, dtype=torch.float, device=self.weight.device)       
+        weight = (1 - self.weight) * (self.weight ** torch.flip(powers, dims=(0,)))       
         init_weight = self.weight ** (powers + 1)
 
         return rearrange(init_weight, 'h t -> 1 t h 1'), \
@@ -86,8 +81,7 @@ class ExponentialSmoothing(nn.Module):
 
 
 class Feedforward(nn.Module):
-    def __init__(self, d_model, dim_feedforward, dropout=0.1, activation='sigmoid'):
-        # Implementation of Feedforward model
+    def __init__(self, d_model, dim_feedforward, dropout=0.1, activation='sigmoid'):       
         super().__init__()
         self.linear1 = nn.Linear(d_model, dim_feedforward, bias=False)
         self.dropout1 = nn.Dropout(dropout)
@@ -116,10 +110,7 @@ class GrowthLayer(nn.Module):
         assert self.d_head * self.nhead == self.d_model, "d_model must be divisible by nhead"
 
     def forward(self, inputs):
-        """
-        :param inputs: shape: (batch, seq_len, dim)
-        :return: shape: (batch, seq_len, dim)
-        """
+               
         b, t, d = inputs.shape
         values = self.in_proj(inputs).view(b, t, self.nhead, -1)
         values = torch.cat([repeat(self.z0, 'h d -> b 1 h d', b=b), values], dim=1)
@@ -140,7 +131,7 @@ class FourierLayer(nn.Module):
         self.low_freq = low_freq
 
     def forward(self, x):
-        """x: (b, t, d)"""
+               
         b, t, d = x.shape
         x_freq = fft.rfft(x, dim=1)
 
@@ -217,9 +208,7 @@ class EncoderLayer(nn.Module):
 
         self.growth_layer = GrowthLayer(d_model, nhead, dropout=dropout)
         self.seasonal_layer = FourierLayer(d_model, pred_len, k=k)
-        self.level_layer = LevelLayer(d_model, c_out, dropout=dropout)
-
-        # Implementation of Feedforward model
+        self.level_layer = LevelLayer(d_model, c_out, dropout=dropout)       
         self.ff = Feedforward(d_model, dim_feedforward, dropout=dropout, activation=activation)
         self.norm1 = nn.LayerNorm(d_model, eps=layer_norm_eps)
         self.norm2 = nn.LayerNorm(d_model, eps=layer_norm_eps)

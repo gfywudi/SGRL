@@ -6,7 +6,6 @@ import torch.nn as nn
 class PositionalEmbedding(nn.Module):
     def __init__(self, d_model, max_len=6500):
         super(PositionalEmbedding, self).__init__()
-        # Compute the positional encodings once in log space.
         pe = torch.zeros(max_len, d_model).float()
         pe.require_grad = False
 
@@ -132,14 +131,12 @@ class DataEmbedding_inverted(nn.Module):
 
     def forward(self, x, x_mark):
         x = x.permute(0, 2, 1)
-        # x: [Batch Variate Time]
         if x_mark is None:
             x = self.value_embedding(x)
         else:
             x = self.value_embedding(
                 torch.cat([x, x_mark.permute(0, 2, 1)], 1))
-        # x: [Batch Variate d_model]
-        return self.dropout(x)
+            return self.dropout(x)
 
 
 class DataEmbedding_wo_pos(nn.Module):
@@ -164,26 +161,17 @@ class DataEmbedding_wo_pos(nn.Module):
 class PatchEmbedding(nn.Module):
     def __init__(self, d_model, patch_len, stride, padding, dropout):
         super(PatchEmbedding, self).__init__()
-        # Patching
         self.patch_len = patch_len
         self.stride = stride
         self.padding_patch_layer = nn.ReplicationPad1d((0, padding))
-
-        # Backbone, Input encoding: projection of feature vectors onto a d-dim vector space
         self.value_embedding = nn.Linear(patch_len, d_model, bias=False)
-
-        # Positional embedding
         self.position_embedding = PositionalEmbedding(d_model)
-
-        # Residual dropout
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x):
-        # do patching
         n_vars = x.shape[1]
         x = self.padding_patch_layer(x)
         x = x.unfold(dimension=-1, size=self.patch_len, step=self.stride)
         x = torch.reshape(x, (x.shape[0] * x.shape[1], x.shape[2], x.shape[3]))
-        # Input encoding
         x = self.value_embedding(x) + self.position_embedding(x)
         return self.dropout(x), n_vars

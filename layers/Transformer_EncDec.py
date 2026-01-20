@@ -137,8 +137,7 @@ class Encoder(nn.Module):
             conv_layers) if conv_layers is not None else None
         self.norm = norm_layer
 
-    def forward(self, x, attn_mask=None, tau=None, delta=None):
-        # x [B, L, D]
+    def forward(self, x, attn_mask=None, tau=None, delta=None):       
         attns = []
         if self.conv_layers is not None:
             for i, (attn_layer, conv_layer) in enumerate(zip(self.attn_layers, self.conv_layers)):
@@ -189,8 +188,7 @@ class DecoderOnly(nn.Module):
             conv_layers) if conv_layers is not None else None
         self.norm = norm_layer
 
-    def forward(self, x, attn_mask=None, tau=None, delta=None):
-        # x [B, L, D]
+    def forward(self, x, attn_mask=None, tau=None, delta=None):       
         attns = []
         if self.conv_layers is not None:
             for i, (attn_layer, conv_layer) in enumerate(zip(self.attn_layers, self.conv_layers)):
@@ -221,8 +219,7 @@ class TimerBlock(nn.Module):
             conv_layers) if conv_layers is not None else None
         self.norm = norm_layer
 
-    def forward(self, x, n_vars, n_tokens, attn_mask=None, tau=None, delta=None):
-        # x [B, L, D]
+    def forward(self, x, n_vars, n_tokens, attn_mask=None, tau=None, delta=None):       
         attns = []
         if self.conv_layers is not None:
             for i, (attn_layer, conv_layer) in enumerate(zip(self.attn_layers, self.conv_layers)):

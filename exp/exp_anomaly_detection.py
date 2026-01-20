@@ -35,42 +35,23 @@ class FinetuningConfig:
   master_port: str = "12358"
   master_addr: str = "localhost"
   use_wandb: bool = True
-  wandb_project: str = "Timeser"
 
 
 class MetricsLogger(ABC):
-  """Abstract base class for logging metrics during training.
-
-    This class defines the interface for logging metrics during model training.
-    Concrete implementations can log to different backends (e.g., WandB, TensorBoard).
-    """
 
   @abstractmethod
   def log_metrics(self,
                   metrics: Dict[str, Any],
                   step: Optional[int] = None) -> None:
-    """Log metrics to the specified backend.
 
-        Args:
-          metrics: Dictionary containing metric names and values.
-          step: Optional step number or epoch for the metrics.
-        """
     pass
 
   @abstractmethod
   def close(self) -> None:
-    """Clean up any resources used by the logger."""
     pass
 
 
 class WandBLogger(MetricsLogger):
-  """Weights & Biases implementation of metrics logging.
-
-    Args:
-      project: Name of the W&B project.
-      config: Configuration dictionary to log.
-      rank: Process rank in distributed training.
-    """
 
   def __init__(self, project: str, config: Dict[str, Any], rank: int = 0):
     self.rank = rank
@@ -80,12 +61,7 @@ class WandBLogger(MetricsLogger):
   def log_metrics(self,
                   metrics: Dict[str, Any],
                   step: Optional[int] = None) -> None:
-    """Log metrics to W&B if on the main process.
 
-        Args:
-          metrics: Dictionary of metrics to log.
-          step: Current training step or epoch.
-        """
     wandb.log(metrics, step=step)
 
   def close(self) -> None:
@@ -108,12 +84,12 @@ class Exp_Anomaly_Detection(Exp_Basic):
 
         if self.args.dataset == "MIMIC":
             with open(
-                    '/.../data/MIMIC/mimic-iv-ecg-diagnostic-electrocardiogram-matched-subset-1.0/machine_measurement_X_and_Y/label_vocab.json',
+                    '/.../label_vocab.json',
                     'r', encoding='utf-8') as file:
                 text_list = json.load(file)
 
         elif self.args.dataset =="PTBXL":
-            self.label_list = np.loadtxt('/.../data/PTBXL/PTBXL_diagnostic/subsubclass/Y_unique_list.txt',
+            self.label_list = np.loadtxt('/.../Y_unique_list.txt',
                                          delimiter=',', dtype=str)
             with open('/./CKEPE_prompt.json', 'r', encoding='utf-8') as file:
                 data_dict = json.load(file)
@@ -122,10 +98,10 @@ class Exp_Anomaly_Detection(Exp_Basic):
             for i in result:
                 a =data_dict[i]
                 text_list.append(a)
-            self.rare_index =[0,1,2,3,4,7,8,9,11,12,14,15,16,17,19,21,22,24,25,26,27,28,29,30,31,32,33,35,36,37,38,39,40,41,42,43]
+            self.rare_index =[0,1,2,3,4,7,8,9,11,2,43]
 
         elif self.args.dataset =="G12EC":
-            self.label_list = np.loadtxt('/.../data/G12EC/unique_list_filtered.txt',
+            self.label_list = np.loadtxt('/.../unique_list_filtered.txt',
                                          delimiter=',', dtype=str)
             with open('/.../CKEPE_prompt.json', 'r', encoding='utf-8') as file:
                 data_dict = json.load(file)
@@ -137,9 +113,9 @@ class Exp_Anomaly_Detection(Exp_Basic):
             self.rare_index = [2,4,5,8,9,10,12,16,17,22,25]
 
         elif self.args.dataset =="SPH":
-            with open('/.../data/SPH/Processed_data/Y_unique_list.json', 'r', encoding='utf-8') as file:
+            with open('/.../Y_unique_list.json', 'r', encoding='utf-8') as file:
                 self.label_list = json.load(file)
-            self.rare_index = [1,2,3,5,6,7,8,9,10,11,12,14,16,17,18,19,20,21,22,23,24,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43]
+            self.rare_index = [1,2,3,5,6,7,8,9,10,11,12,14,16,35,36,37,38,39,40,41,42,43]
 
     def _build_model(self):
         model = self.model_dict[self.args.model].Model(self.args).float()
@@ -157,15 +133,7 @@ class Exp_Anomaly_Detection(Exp_Basic):
         return model_optim
 
     def _select_criterion(self,reconstructed,batch_y,decorrelation_feature):
-              
-              
-              
-              
-              
-              
-              
-              
-              
+
         C = self.args.num_classes
         pos_weight = torch.ones(C, device=reconstructed.device)
         pos_weight[self.rare_index] = 3.0        
@@ -173,21 +141,12 @@ class Exp_Anomaly_Detection(Exp_Basic):
         fn = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
         loss_fn = fn(reconstructed, batch_y)
 
-              
-
         loss_dec = label_decorrelation_loss(decorrelation_feature,batch_y)
         return loss_fn+0*loss_dec
               
 
     def get_pred_labels_with_best_threshold(self, pred_probs, true_labels, thresholds=np.arange(0.0, 1.1, 0.01)):
-        """
-        为每个类别选择最优阈值并生成预测标签矩阵。
 
-        :param pred_probs: 预测的概率矩阵，形状为 (样本数量, 标签数量)
-        :param true_labels: 真实标签矩阵，形状为 (样本数量, 标签数量)
-        :param thresholds: 阈值范围，默认为从0到1的步长为0.01
-        :return: pred_labels：预测标签矩阵，形状为 (样本数量, 标签数量)
-        """
         num_labels = pred_probs.shape[1]
         best_thresholds = np.zeros(num_labels)        
         pred_labels = np.zeros_like(pred_probs)        
@@ -196,7 +155,6 @@ class Exp_Anomaly_Detection(Exp_Basic):
             best_f1 = 0
             best_threshold = 0
 
-                  
             for threshold in thresholds:
                       
                 temp_pred_labels = (pred_probs[:, i] >= threshold).astype(int)
@@ -211,9 +169,6 @@ class Exp_Anomaly_Detection(Exp_Basic):
                   
             pred_labels[:, i] = (pred_probs[:, i] >= best_threshold).astype(int)
             best_thresholds[i] = best_threshold
-
-                  
-                  
 
         return pred_labels, best_thresholds
 
@@ -452,9 +407,6 @@ class Exp_Anomaly_Detection(Exp_Basic):
                       
                 outputs, decorrelation_feature, CS_loss= self.model(batch_x)
 
-                      
-                      
-                      
                 a = self.args.a        
                 loss = criterion(outputs,batch_y, decorrelation_feature)+CS_loss * 0.00001 * a
                 total_loss.append(loss.item())
@@ -477,10 +429,7 @@ class Exp_Anomaly_Detection(Exp_Basic):
             total_loss = np.average(total_loss)
             all_preds = np.concatenate(all_preds, axis=0)        
             all_labels = np.concatenate(all_labels, axis=0)        
-            all_preds_one = np.concatenate(all_preds_one, axis=0)        
-                  
-                  
-
+            all_preds_one = np.concatenate(all_preds_one, axis=0)
             all_preds = np.nan_to_num(all_preds, nan=0.0)
             all_labels = np.nan_to_num(all_labels, nan=0.0)
                   
@@ -506,9 +455,6 @@ class Exp_Anomaly_Detection(Exp_Basic):
         train_data, train_loader = self._get_data(flag='train')
               
         test_data, test_loader = self._get_data(flag='valid')
-
-              
-
         train_steps = len(train_loader)
 
         early_stopping = EarlyStopping(patience=self.args.patience, verbose=True)
@@ -557,7 +503,6 @@ class Exp_Anomaly_Detection(Exp_Basic):
                     true_labels = batch_y.detach().cpu().numpy()
                     all_labels.append(true_labels)
                     loss = criterion(outputs, batch_y,batch_y)
-                  
 
                 loss.backward()
                 model_optim.step()
@@ -617,10 +562,6 @@ class Exp_Anomaly_Detection(Exp_Basic):
 
 
     def save_model(self, save_path,epoch,model_optim):
-        """
-        保存模型为 .ckpt 格式（兼容 PyTorch Lightning 的检查点格式）
-        :param save_path: 保存路径，应以 .ckpt 结尾
-        """
         if not save_path.endswith('.ckpt'):
             raise ValueError("保存路径应以 .ckpt 结尾")
 

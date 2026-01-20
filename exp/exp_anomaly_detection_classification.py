@@ -83,28 +83,16 @@ class MetricsLogger(ABC):
   def log_metrics(self,
                   metrics: Dict[str, Any],
                   step: Optional[int] = None) -> None:
-    """Log metrics to the specified backend.
 
-        Args:
-          metrics: Dictionary containing metric names and values.
-          step: Optional step number or epoch for the metrics.
-        """
     pass
 
   @abstractmethod
   def close(self) -> None:
-    """Clean up any resources used by the logger."""
     pass
 
 
 class WandBLogger(MetricsLogger):
-  """Weights & Biases implementation of metrics logging.
 
-    Args:
-      project: Name of the W&B project.
-      config: Configuration dictionary to log.
-      rank: Process rank in distributed training.
-    """
 
   def __init__(self, project: str, config: Dict[str, Any], rank: int = 0):
     self.rank = rank
@@ -114,16 +102,11 @@ class WandBLogger(MetricsLogger):
   def log_metrics(self,
                   metrics: Dict[str, Any],
                   step: Optional[int] = None) -> None:
-    """Log metrics to W&B if on the main process.
 
-        Args:
-          metrics: Dictionary of metrics to log.
-          step: Current training step or epoch.
-        """
     wandb.log(metrics, step=step)
 
   def close(self) -> None:
-    """Finish the W&B run if on the main process."""
+
     if self.rank == 0:
       wandb.finish()
 
@@ -140,7 +123,7 @@ class Exp_Anomaly_Detection_classification(Exp_Basic):
 
     def get_model(self,load_weights: bool = False):
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        repo_id = "/.../large_model/timesfm-2.0-500m-pytorch/torch_model.ckpt"
+        repo_id = "/.../torch_model.ckpt"
         hparams = TimesFmHparams(
             backend=device,
             per_core_batch_size=32,
@@ -154,7 +137,7 @@ class Exp_Anomaly_Detection_classification(Exp_Basic):
                       checkpoint=TimesFmCheckpoint(path=repo_id))
         model = PatchedTimeSeriesDecoder(tfm._model_config)
         if load_weights:
-            checkpoint_path = "/.../large_model/timesfm-2.0-500m-pytorch/torch_model.ckpt"
+            checkpoint_path = "/...torch_model.ckpt"
                   
             loaded_checkpoint = torch.load(checkpoint_path, weights_only=True)
             model.load_state_dict(loaded_checkpoint)
@@ -202,12 +185,8 @@ class Exp_Anomaly_Detection_classification(Exp_Basic):
 
     def supervised_contrastive_loss(self,features,features_recon, labels, temperature=0.1, base_temperature=0.07):
         import torch.nn.functional as F
-        """
-        改进版：引入基温度（base_temperature）增强数值稳定性
-        """
         batch_size = features.shape[0]
 
-              
         similarity_matrix = self.mse_distance_matrix(features,features_recon)
               
 
@@ -252,11 +231,6 @@ class Exp_Anomaly_Detection_classification(Exp_Basic):
 
         weighted_mse_12 = (per_sample_mse_12 * batch_whether).mean()        
 
-              
-              
-              
-              
-              
         return weighted_mse+0.1*mse
 
     def vali(self, vali_data, vali_loader, criterion):
@@ -280,10 +254,6 @@ class Exp_Anomaly_Detection_classification(Exp_Basic):
                 else:
                           
                     outputs_all = self.model(batch_x,batch_x_12, None, None, None)
-
-                      
-                      
-                      
                 outputs, outputs_12,classification = outputs_all
 
                 loss = criterion(outputs,outputs_12,batch_x.squeeze(dim=1), batch_x_12.squeeze(dim=1),classification,batch_y,batch_whether)
@@ -565,18 +535,14 @@ class Exp_Anomaly_Detection_classification(Exp_Basic):
         self.model =  self.model.to("cpu")
         self.model.eval()
         test_data, test_loader = self._get_data(flag='test')
-        self.Y_train = np.load('/.../data/PTBXL/PTBXL_diagnostic/subsubclass/Y_origin.npy', allow_pickle=True)
-        self.test_index = np.load("/.../data/PTBXL/PTBXL_diagnostic/"+str(9 + 1) + "fold_index.npy")
+        self.Y_train = np.load('/.../Y_origin.npy', allow_pickle=True)
+        self.test_index = np.load("/.../"+str(9 + 1) + "fold_index.npy")
         self.Y_test =  self.Y_train[self.test_index]
 
 
         for id in range(200):
             x_context,patients_ECG_head_and_tail,y,_,batch_x_12 = test_data[id]
             y_test_name =  self.Y_test[id]
-                  
-                  
-                  
-
             x_context = torch.from_numpy(x_context)       
             batch_x_12 = torch.from_numpy(batch_x_12)        
             batch_x_12 = batch_x_12.expand(x_context.size(0), -1, -1)
@@ -626,9 +592,6 @@ class Exp_Anomaly_Detection_classification(Exp_Basic):
                         ax = axes
                     context_vals = x_context[0,:,i].cpu().numpy()
                     predictions_vals = predictions[0,:,i].cpu().numpy()
-
-                          
-                          
                     abs_diff = (context_vals - predictions_vals) ** 2
                           
                     threshold = 0.5        
@@ -641,48 +604,11 @@ class Exp_Anomaly_Detection_classification(Exp_Basic):
                     ax2.plot(abs_diff, label="error", color="pink", linewidth=1)
                     ax.fill_between(np.linspace(0, 1440, 1440),abs_diff, color='pink', alpha=0.4, label='Area under curve')
                           
-                          
-                          
-                          
-                          
-                          
-                          
-                          
-                          
-                          
-                          
-                          
-                          
-                          
-                          
-                          
                     ax.set_title(f"lead {lead[i]} disease ({y_test_name})")
                     ax.set_xlabel("Time Step")
                     if i == 0:        
                         ax.set_ylabel("Value")
                     ax.grid(True)
-
-                  
-                  
-                  
-                  
-                  
-                  
-                  
-                  
-                  
-                  
-                  
-                  
-                  
-                  
-                  
-                  
-                  
-                  
-                  
-                  
-                  
 
             path = os.path.join(self.args.checkpoints, setting)
             if not os.path.exists(path):
@@ -698,8 +624,8 @@ class Exp_Anomaly_Detection_classification(Exp_Basic):
         self.model =  self.model.to("cpu")
         self.model.eval()
         test_data, test_loader = self._get_data(flag='test')
-        self.Y_train = np.load('/.../data/PTBXL/PTBXL_diagnostic/subsubclass/Y_origin.npy', allow_pickle=True)
-        self.test_index = np.load("/..../data/PTBXL/PTBXL_diagnostic/"+str(9 + 1) + "fold_index.npy")
+        self.Y_train = np.load('/.../Y_origin.npy', allow_pickle=True)
+        self.test_index = np.load("/.../"+str(9 + 1) + "fold_index.npy")
         self.Y_test =  self.Y_train[self.test_index]
 
 
@@ -739,38 +665,17 @@ class Exp_Anomaly_Detection_classification(Exp_Basic):
                       
                 threshold = 0.5        
                 diff_mask = abs_diff > threshold
-                      
 
                 ax.plot(context_vals, label="True", color="blue", linewidth=1)
                 ax.plot(predictions_vals, label="Pred", color="green", linestyle="--", linewidth=1)
                 ax2 = ax.twinx()
                 ax2.plot(abs_diff, label="error", color="pink", linewidth=1)
                 ax.fill_between(np.linspace(0, 767, 768), abs_diff, color='pink', alpha=0.4, label='Area under curve')
-
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
                 ax.set_title(f"lead {lead[i]} disease ({y_test_name})")
                 ax.set_xlabel("Time Step")
                 if i == 0:        
                     ax.set_ylabel("Value")
                 ax.grid(True)
-
-
-                  
 
             path = os.path.join(self.args.checkpoints, setting)
             if not os.path.exists(path):
